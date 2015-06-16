@@ -1,12 +1,17 @@
 var gulp = require('gulp'),
   connect = require('gulp-connect'),
   jshint = require('gulp-jshint'),
-  ngAnnotate = require('gulp-ng-annotate'),
   karma = require('karma').server,
-  srcPath = './src/',
+  ngAnnotate = require('gulp-ng-annotate'),
+  sass = require('gulp-sass'),
+  sasslint = require('gulp-scss-lint'),
+  uglify = require('gulp-uglify'),
   appSrcPath = './src/app/',
-  testSrcPath = './test/',
-  distPath = './dist/';
+  distPath = './dist/',
+  nodeSrcPath = './node_modules/',
+  sassSrcPath = './src/sass/',
+  srcPath = './src/',
+  testSrcPath = './src/app/';
 
 gulp.task('connect.init', function () {
   connect.server({
@@ -29,6 +34,12 @@ gulp.task('connect.watch', function () {
       'script.test',
       'compile',
       'connect.reload']);
+
+  gulp.watch(
+    [sassSrcPath + '**/*.scss'],
+    ['sass.lint',
+      'sass.css',
+      'connect.reload']);
 });
 
 gulp.task('script.lint', function () {
@@ -44,14 +55,45 @@ gulp.task('script.test', function (done) {
   }, done);
 });
 
-gulp.task('compile', function () {
-  gulp.src([appSrcPath + '**/*.js'])
-    .pipe(ngAnnotate())
-    .pipe(gulp.dest('./dist/app'));
+gulp.task('script', ['script.lint', 'script.test']);
 
-  gulp.src(['./src/**/*.html'])
-    .pipe(gulp.dest('./dist/'));
+gulp.task('sass.lint', function () {
+  gulp.src (sassSrcPath + '**/*.scss')
+    .pipe(sasslint());
 });
+
+gulp.task('sass.css', function () {
+  gulp.src([sassSrcPath + '**/*.scss'])
+    .pipe(sass().on('error', sass.logError))
+    .pipe(gulp.dest(distPath + 'css/'));
+});
+
+gulp.task('sass', ['sass.lint', 'sass.css']);
+
+gulp.task('build.compile', function () {
+
+  gulp.src([appSrcPath + '**/*.js',
+    '!' + appSrcPath + '**/*-spec.js'])
+    .pipe(ngAnnotate())
+    .pipe(gulp.dest(distPath + 'app/'));
+
+  gulp.src([srcPath + '**/*.html'])
+    .pipe(gulp.dest(distPath));
+
+  gulp.src([nodeSrcPath + 'angular/angular.min.js'])
+    .pipe(gulp.dest(distPath + 'vendor/angular/'));
+});
+
+gulp.task('build.uglify', function () {
+
+  gulp.src([distPath + '**/*.js',
+    '!' + distPath + 'vendor/**/*.js'])
+    .pipe(uglify())
+    .pipe(gulp.dest(distPath));
+
+});
+
+gulp.task('build', ['build.compile', 'build.uglify']);
 
 gulp.task('tdd', function () {
   gulp.watch(
@@ -61,15 +103,17 @@ gulp.task('tdd', function () {
       'script.test']);
 });
 
-gulp.task('default',
-  ['script.lint',
-  'script.test',
-  'compile']);
-
 gulp.task('serve',
   ['connect.init',
-    'default',
+    'script',
+    'sass',
+    'build.compile',
     'connect.reload',
     'connect.watch']);
 
-gulp.task('test', ['script.test']);
+gulp.task('test', ['script']);
+
+gulp.task('default',
+  ['script',
+    'sass',
+    'build']);

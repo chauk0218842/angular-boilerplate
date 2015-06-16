@@ -1,1 +1,6 @@
-console.log(26333);
+'use strict';
+
+angular.module ('boilerApp', [])
+  .run(function () {
+
+  });
