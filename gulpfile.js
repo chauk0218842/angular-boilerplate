@@ -34,7 +34,7 @@ gulp.task('connect.watch', function () {
       srcPath + '*.html'],
     ['script.lint',
       'script.test',
-      'compile',
+      'build.compile',
       'connect.reload']);
 
   gulp.watch(
@@ -42,6 +42,10 @@ gulp.task('connect.watch', function () {
     ['sass.lint',
       'sass.css',
       'connect.reload']);
+
+  gulp.watch(
+    [srcPath + '**/*.html'],
+    ['connect.reload']);
 });
 
 gulp.task('script.lint', function () {
@@ -67,7 +71,7 @@ gulp.task('sass.lint', function () {
 gulp.task('sass.css', function () {
   gulp.src([sassSrcPath + '**/*.scss'])
     .pipe(sass().on('error', sass.logError))
-    .pipe(gulp.dest(distPath + 'css/'));
+    .pipe(gulp.dest(distPath + 'styles/'));
 });
 
 gulp.task('sass', ['sass.lint', 'sass.css']);
