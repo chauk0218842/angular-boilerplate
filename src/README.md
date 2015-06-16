@@ -1,3 +1,3 @@
 # Readme
 
-This is a generic readme file
+- This is a generic AngularJS + gulp boilerplate
